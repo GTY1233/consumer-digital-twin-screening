@@ -1,0 +1,184 @@
+"""Regenerate manuscript Figures 3-6 from the frozen numbers."""
+
+import json
+import pathlib
+import sys
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
+from matplotlib.patches import FancyBboxPatch  # noqa: E402
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from common import RUNS, read_jsonl  # noqa: E402
+
+OUT = pathlib.Path(__file__).resolve().parent.parent / "figures"
+OUT.mkdir(parents=True, exist_ok=True)
+NUM = json.loads(
+    (pathlib.Path(__file__).resolve().parent.parent / "final_numbers.json").read_text("utf-8")
+)
+
+plt.rcParams.update(
+    {
+        "font.family": "DejaVu Sans",
+        "font.size": 11,
+        "axes.linewidth": 1.0,
+        "figure.dpi": 200,
+        "savefig.dpi": 200,
+    }
+)
+
+BLUE, LBLUE, GREY, ORANGE, GREEN = "#1f4e79", "#5b8db8", "#a6a6a6", "#c8892a", "#2e6b34"
+
+
+def random_lift() -> float:
+    """Expected decision lift of a uniformly random choice among creatives."""
+    tasks = read_jsonl(RUNS / "ad_confirmatory_tasks.jsonl")
+    lifts = []
+    for t in tasks:
+        imp, clk = t["meta"]["impressions"], t["meta"]["clicks"]
+        ctrs = [c / i for c, i in zip(clk, imp)]
+        mean_ctr = sum(clk) / sum(imp)
+        lifts.append(sum(ctrs) / len(ctrs) / mean_ctr - 1)
+    return sum(lifts) / len(lifts)
+
+
+def box(ax, x, y, w, h, title, body, face, edge="#1f4e79", title_size=12):
+    ax.add_patch(
+        FancyBboxPatch(
+            (x, y), w, h, boxstyle="round,pad=0.012,rounding_size=0.02",
+            linewidth=1.4, edgecolor=edge, facecolor=face,
+        )
+    )
+    ax.text(x + w / 2, y + h * 0.70, title, ha="center", va="center",
+            fontsize=title_size, fontweight="bold", color="#1f3864")
+    if body:
+        ax.text(x + w / 2, y + h * 0.30, body, ha="center", va="center",
+                fontsize=9.5, color="#333333")
+
+
+def figure3() -> None:
+    fig, ax = plt.subplots(figsize=(9.2, 3.6))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    box(ax, 0.02, 0.60, 0.28, 0.32, "Exploratory split",
+        "4,873 tests\nmethod development only", "#eef2f7")
+    box(ax, 0.36, 0.60, 0.28, 0.32, "Confirmatory split",
+        "22,743 tests\none reported evaluation", "#fdf3e3")
+    box(ax, 0.70, 0.60, 0.28, 0.32, "Holdout split",
+        "4,871 tests\nnot used", "#f0f0f0")
+    ax.annotate("", xy=(0.355, 0.80), xytext=(0.305, 0.80),
+                arrowprops=dict(arrowstyle="-|>", lw=1.6, color=BLUE))
+    ax.text(0.33, 0.94, "protocol frozen", ha="center", va="bottom",
+            fontsize=9.5, color=BLUE)
+    ax.annotate("", xy=(0.50, 0.32), xytext=(0.50, 0.585),
+                arrowprops=dict(arrowstyle="-|>", lw=1.6, color=BLUE))
+    box(ax, 0.06, 0.02, 0.88, 0.30, "Two recorded executions of the frozen protocol",
+        "pairwise accuracy, top-1 and decision lift\nagainst real outcomes", "#e8eef6",
+        title_size=11.5)
+    fig.savefig(OUT / "figure3.png", bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+
+
+def figure4() -> None:
+    a, i = NUM["run2_advertising"]["AGG"], NUM["run2_advertising"]["IND"]
+    labels = ["AGG\n(primary)", "IND", "Random\nchoice"]
+    vals = [a["pairwise_accuracy"] * 100, i["pairwise_accuracy"] * 100, 50.0]
+    errs = [
+        [(a["pairwise_accuracy"] - a["ci95"][0]) * 100, (a["ci95"][1] - a["pairwise_accuracy"]) * 100],
+        [(i["pairwise_accuracy"] - i["ci95"][0]) * 100, (i["ci95"][1] - i["pairwise_accuracy"]) * 100],
+        [0, 0],
+    ]
+    errs = [[e[0] for e in errs], [e[1] for e in errs]]
+    fig, ax = plt.subplots(figsize=(6.6, 4.4))
+    bars = ax.bar(labels, vals, color=[BLUE, LBLUE, GREY], width=0.6,
+                  yerr=errs, capsize=5, error_kw=dict(ecolor="#333333", lw=1.2))
+    ax.axhline(50, color="#b03030", ls="--", lw=1.3)
+    ax.text(-0.44, 50.22, "chance 50%", color="#b03030", fontsize=9.5, ha="left", va="bottom")
+    for bar, v in zip(bars, vals):
+        ax.text(bar.get_x() + bar.get_width() / 2, v + 0.65, f"{v:.2f}",
+                ha="center", fontsize=10.5, fontweight="bold")
+    ax.set_ylim(47.5, 60)
+    ax.set_ylabel("Pairwise accuracy (%)")
+    ax.set_yticks([48, 50, 52, 54, 56, 58, 60])
+    ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout()
+    fig.savefig(OUT / "figure4.png", facecolor="white")
+    plt.close(fig)
+
+
+def figure5() -> None:
+    a = NUM["run2_advertising"]["AGG"]
+    rnd = random_lift() * 100
+    sysv = a["decision_lift"] * 100
+    oracle = a["oracle_lift"] * 100
+    fig, ax = plt.subplots(figsize=(6.6, 4.4))
+    vals = [rnd, sysv, oracle]
+    bars = ax.bar(["Random\nchoice", "System\nchoice", "Perfect\nranking"], vals,
+                  color=[GREY, BLUE, GREEN], width=0.6)
+    for bar, v in zip(bars, vals):
+        off = 0.8 if v >= 0 else -2.2
+        ax.text(bar.get_x() + bar.get_width() / 2, v + off, f"{v:+.2f}%",
+                ha="center", fontsize=10.5, fontweight="bold")
+    ax.annotate(
+        "", xy=(2, oracle - 1.2), xytext=(1, sysv + 1.2),
+        arrowprops=dict(arrowstyle="-|>", lw=1.5, color="#555555"),
+    )
+    ax.text(0.52, 31.0,
+            f"{a['share_of_oracle'] * 100:.1f}% of the gain\navailable to a perfect\nranking is captured",
+            ha="left", va="center", fontsize=9.5, color="#555555")
+    ax.axhline(0, color="#333333", lw=1.0)
+    ax.set_ylabel("Click-through-rate lift over the test average (%)")
+    ax.set_ylim(-3, 42)
+    ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout()
+    fig.savefig(OUT / "figure5.png", facecolor="white")
+    plt.close(fig)
+
+
+def figure6() -> None:
+    ad, npr = NUM["run2_advertising"], NUM["run2_crowdfunding"]
+    groups = ["Aggregate", "Individual", "Persona panel"]
+    adv = [
+        ad["AGG"]["pairwise_accuracy"] * 100,
+        ad["IND"]["pairwise_accuracy"] * 100,
+        ad["PANEL"]["panel_pairwise_accuracy"] * 100,
+    ]
+    npv = [
+        npr["AGG"]["pairwise_accuracy_auc"] * 100,
+        npr["IND"]["pairwise_accuracy_auc"] * 100,
+        npr["PANEL"]["panel_auc"] * 100,
+    ]
+    x = range(len(groups))
+    fig, ax = plt.subplots(figsize=(7.4, 4.4))
+    w = 0.36
+    b1 = ax.bar([i - w / 2 for i in x], adv, w, label="Advertising creative", color=BLUE)
+    b2 = ax.bar([i + w / 2 for i in x], npv, w, label="New-product screening", color=ORANGE)
+    for bars in (b1, b2):
+        for bar in bars:
+            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.35,
+                    f"{bar.get_height():.2f}", ha="center", fontsize=9.2)
+    ax.axhline(npr["AGG"]["goal_baseline"] * 100, color="#7a7a7a", ls=":", lw=1.4)
+    ax.text(-0.45, npr["AGG"]["goal_baseline"] * 100 - 0.3,
+            "funding goal alone", color="#5a5a5a", fontsize=9.2, ha="left", va="top")
+    ax.set_xticks(list(x))
+    ax.set_xticklabels(groups)
+    ax.set_ylim(52.0, 63.6)
+    ax.set_ylabel("Pairwise accuracy (%)")
+    ax.legend(loc="upper left", frameon=False, fontsize=9.5)
+    ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout()
+    fig.savefig(OUT / "figure6.png", facecolor="white")
+    plt.close(fig)
+
+
+if __name__ == "__main__":
+    sys.stdout.reconfigure(encoding="utf-8")
+    figure3()
+    figure4()
+    figure5()
+    figure6()
+    print("random-choice decision lift: %.4f%%" % (random_lift() * 100))
+    print("figures written to", OUT)

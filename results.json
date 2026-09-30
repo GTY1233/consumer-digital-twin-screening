@@ -1,0 +1,74 @@
+{
+  "run2_advertising": {
+    "AGG": {
+      "n_tests": 9932,
+      "n_tests_with_pairs": 9913,
+      "pairs": 75232,
+      "pairwise_accuracy": 0.5767,
+      "top1": 0.3218,
+      "decision_lift": 0.0785,
+      "oracle_lift": 0.3753,
+      "share_of_oracle": 0.2091,
+      "beats_mean": 0.5766,
+      "ci95": [
+        0.572,
+        0.5818
+      ]
+    },
+    "IND": {
+      "n_tests": 9932,
+      "n_tests_with_pairs": 9886,
+      "pairs": 78143,
+      "pairwise_accuracy": 0.5426,
+      "top1": 0.2828,
+      "decision_lift": 0.0426,
+      "oracle_lift": 0.3753,
+      "share_of_oracle": 0.1135,
+      "beats_mean": 0.5311,
+      "ci95": [
+        0.5382,
+        0.5474
+      ]
+    },
+    "PANEL": {
+      "panel_tests": 1500,
+      "panel_pairs": 11318,
+      "panel_pairwise_accuracy": 0.5472698356600106,
+      "unconditioned_pairs": 11232,
+      "unconditioned_pairwise_accuracy": 0.5746972934472935,
+      "mean_persona_sd": 13.634184195355003,
+      "mean_abs_gap_panel_vs_unconditioned": 26.058038888888873
+    }
+  },
+  "run2_crowdfunding": {
+    "AGG": {
+      "n_scored": 21626,
+      "n_funded": 6912,
+      "n_unfunded": 14714,
+      "pairwise_accuracy_auc": 0.5953,
+      "pairs": 101703168,
+      "goal_baseline": 0.6154,
+      "goal_pairs": 101703168,
+      "same_goal_accuracy": 0.6074,
+      "same_goal_pairs": 2655736
+    },
+    "IND": {
+      "n_scored": 21626,
+      "n_funded": 6912,
+      "n_unfunded": 14714,
+      "pairwise_accuracy_auc": 0.5671,
+      "pairs": 101703168,
+      "goal_baseline": 0.6154,
+      "goal_pairs": 101703168,
+      "same_goal_accuracy": 0.5759,
+      "same_goal_pairs": 2655736
+    },
+    "PANEL": {
+      "panel_items": 1000,
+      "panel_auc": 0.6147328836303297,
+      "panel_pairs": 221776,
+      "unconditioned_auc_same_items": 0.607838539787894,
+      "unconditioned_pairs": 221776
+    }
+  }
+}

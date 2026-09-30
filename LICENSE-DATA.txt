@@ -1,0 +1,13 @@
+The model response data in the runs/ directory is released under the
+Creative Commons Attribution 4.0 International licence (CC BY 4.0),
+https://creativecommons.org/licenses/by/4.0/.
+
+You are free to share and adapt the material for any purpose, provided you
+give appropriate credit, link to the licence, and indicate if changes were
+made.
+
+The source corpora are redistributed by their original publishers and are not
+covered by this notice:
+
+- Upworthy Research Archive, CC BY 4.0, https://doi.org/10.17605/OSF.IO/JD64P
+- Kickstarter corpus, https://huggingface.co/datasets/james-burton/kick_starter_funding_all_text
