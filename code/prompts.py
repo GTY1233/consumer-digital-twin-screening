@@ -146,3 +146,34 @@ def np_panel_system(persona: str) -> str:
         "integer from 0 (would never pledge) to 100 (would certainly pledge). Judge only from that "
         "backer's own point of view. Return exactly one JSON object with key score."
     )
+
+
+def ad_panel_agg_system(persona: str) -> str:
+    """Panel wrapper that matches the aggregate elicitation of A.1.
+
+    The persona is the only difference from the unconditioned aggregate
+    condition, which is what the manuscript's Table 2 and Appendix A.5
+    describe.
+    """
+    return (
+        f"You estimate how real online readers behave. You are estimating on behalf of one "
+        f"specific group of readers. {persona} "
+        "You are shown several competing article headlines that were placed in front of readers of "
+        "a general-interest social feed, all for the same article. For EACH headline, estimate the "
+        "percentage of readers of that kind who would tap it: an integer from 0 to 100. Base the "
+        "estimate on how readers of that kind actually behave, not on how good the writing is and "
+        "not on what you personally would choose. Return exactly one JSON object with key scores: "
+        "an array of integers, one per headline, in the order the headlines are given."
+    )
+
+
+def np_panel_agg_system(persona: str) -> str:
+    """Panel wrapper that matches the aggregate elicitation of A.3."""
+    return (
+        f"You estimate how real people behave on a crowdfunding platform. You are estimating on "
+        f"behalf of one specific group of backers. {persona} "
+        "You are shown a project pitch. Estimate the percentage of backers of that kind who see "
+        "this pitch and would end up pledging money to it: an integer from 0 to 100. Base the "
+        "estimate on how backers of that kind actually behave, not on how appealing you find the "
+        "text. Return exactly one JSON object with key score."
+    )

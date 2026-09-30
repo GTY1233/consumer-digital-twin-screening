@@ -66,7 +66,7 @@ def figure3() -> None:
     box(ax, 0.02, 0.60, 0.28, 0.32, "Exploratory split",
         "4,873 tests\nmethod development only", "#eef2f7")
     box(ax, 0.36, 0.60, 0.28, 0.32, "Confirmatory split",
-        "22,743 tests\none reported evaluation", "#fdf3e3")
+        "22,743 tests\ntwo recorded executions", "#fdf3e3")
     box(ax, 0.70, 0.60, 0.28, 0.32, "Holdout split",
         "4,871 tests\nnot used", "#f0f0f0")
     ax.annotate("", xy=(0.355, 0.80), xytext=(0.305, 0.80),
@@ -96,7 +96,6 @@ def figure4() -> None:
     bars = ax.bar(labels, vals, color=[BLUE, LBLUE, GREY], width=0.6,
                   yerr=errs, capsize=5, error_kw=dict(ecolor="#333333", lw=1.2))
     ax.axhline(50, color="#b03030", ls="--", lw=1.3)
-    ax.text(-0.44, 50.22, "chance 50%", color="#b03030", fontsize=9.5, ha="left", va="bottom")
     for bar, v in zip(bars, vals):
         ax.text(bar.get_x() + bar.get_width() / 2, v + 0.65, f"{v:.2f}",
                 ha="center", fontsize=10.5, fontweight="bold")

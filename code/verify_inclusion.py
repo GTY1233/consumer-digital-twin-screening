@@ -7,9 +7,16 @@ Rules (manuscript Section 4.2):
   4. every arm received at least 1,000 impressions
   5. the test accumulated at least ten clicks in total
 
-Targets reported in the paper:
-  confirmatory: 9,924 tests / 44,272 packages / 159.5M impressions / 2.12M clicks
-  exploratory (dev): 2,043 tests
+This module is the check that the reconstruction matches the published archive
+rather than merely resembling it.  Run it before trusting any downstream number.
+
+Values produced by this rule set on the released data:
+  confirmatory: 9,940 tests / 44,341 packages / 159,699,889 impressions / 2,119,865 clicks
+  exploratory (design): 2,046 tests
+
+Note: build_tasks.py additionally strips surrounding whitespace from headlines
+before testing that they are distinct, which removes one exploratory test and
+eight confirmatory tests.  The evaluation therefore uses 2,045 and 9,932 tests.
 """
 
 import os

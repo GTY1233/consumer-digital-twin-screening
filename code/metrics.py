@@ -113,66 +113,88 @@ def bootstrap_ci(per_test: list[dict], rounds: int = 2000, seed: int = 7) -> tup
 
 
 def evaluate_np(results_path: pathlib.Path, labels_path: pathlib.Path) -> dict:
+    return evaluate_np_with_ci(results_path, labels_path, rounds=0)
+
+
+def _np_accuracy(pairs: list[tuple[float, float]]) -> float:
+    if not pairs:
+        return float("nan")
+    concordant = 0.0
+    for s_f, s_u in pairs:
+        if s_f > s_u:
+            concordant += 1
+        elif s_f == s_u:
+            concordant += 0.5
+    return concordant / len(pairs)
+
+
+def evaluate_np_with_ci(
+    results_path: pathlib.Path, labels_path: pathlib.Path, rounds: int = 2000, seed: int = 13
+) -> dict:
+    """Project-level bootstrap.
+
+    Pairs are formed by crossing funded and unfunded projects, so pairs are not
+    independent; resampling projects (not pairs) is the interval that respects
+    that dependence.
+    """
     results = {r["id"]: r["scores"][0] for r in read_jsonl(results_path) if r.get("scores")}
     labels = read_jsonl(labels_path)
-    funded, unfunded = [], []
-    same_goal: dict[float, list[list[float]]] = {}
+    items = []
     for row in labels:
         score = results.get(row["id"])
         if score is None:
             continue
-        item = (float(score), row["goal"])
-        (funded if row["funded"] == 1 else unfunded).append(item)
-        if not math.isnan(item[1]):
-            same_goal.setdefault(item[1], [[], []])[row["funded"]].append(float(score))
+        items.append({"score": float(score), "funded": row["funded"], "goal": row["goal"]})
 
-    concordant = 0.0
-    total = 0.0
-    for s_f, _ in funded:
-        for s_u, _ in unfunded:
-            total += 1
-            if s_f > s_u:
-                concordant += 1
-            elif s_f == s_u:
-                concordant += 0.5
-    auc = concordant / total if total else float("nan")
+    def stats(sample: list[dict]) -> tuple[float, float, float, int, int]:
+        pos = [x["score"] for x in sample if x["funded"] == 1]
+        neg = [x["score"] for x in sample if x["funded"] == 0]
+        auc_pairs = [(p, q) for p in pos for q in neg]
+        auc = _np_accuracy(auc_pairs)
+        by_goal: dict[float, list[list[float]]] = {}
+        for x in sample:
+            g = x["goal"]
+            if not math.isnan(g):
+                by_goal.setdefault(g, [[], []])[x["funded"]].append(x["score"])
+        same_pairs = [
+            (p, q) for _, (neg_s, pos_s) in by_goal.items() for p in pos_s for q in neg_s
+        ]
+        same = _np_accuracy(same_pairs)
+        goal_pairs = [
+            (g_f, g_u)
+            for _, g_f in ((x["goal"], x["goal"]) for x in sample if x["funded"] == 1)
+            if not math.isnan(g_f)
+            for _, g_u in ((x["goal"], x["goal"]) for x in sample if x["funded"] == 0)
+            if not math.isnan(g_u)
+        ]
+        goal = _np_accuracy([(-f, -u) for f, u in goal_pairs])
+        return auc, same, goal, len(auc_pairs), len(same_pairs)
 
-    within_concordant = 0.0
-    within_total = 0.0
-    for _, (neg, pos) in same_goal.items():
-        for s_f in pos:
-            for s_u in neg:
-                within_total += 1
-                if s_f > s_u:
-                    within_concordant += 1
-                elif s_f == s_u:
-                    within_concordant += 0.5
-
-    goal_concordant = 0.0
-    goal_total = 0.0
-    for _, g_f in funded:
-        if math.isnan(g_f):
-            continue
-        for _, g_u in unfunded:
-            if math.isnan(g_u):
-                continue
-            goal_total += 1
-            if g_f < g_u:
-                goal_concordant += 1
-            elif g_f == g_u:
-                goal_concordant += 0.5
-
-    return {
-        "n_scored": len(funded) + len(unfunded),
-        "n_funded": len(funded),
-        "n_unfunded": len(unfunded),
+    auc, same, goal, n_pairs, n_same = stats(items)
+    out = {
+        "n_scored": len(items),
+        "n_funded": sum(1 for x in items if x["funded"] == 1),
+        "n_unfunded": sum(1 for x in items if x["funded"] == 0),
         "pairwise_accuracy_auc": auc,
-        "pairs": int(total),
-        "goal_baseline": goal_concordant / goal_total if goal_total else float("nan"),
-        "goal_pairs": int(goal_total),
-        "same_goal_accuracy": within_concordant / within_total if within_total else float("nan"),
-        "same_goal_pairs": int(within_total),
+        "pairs": n_pairs,
+        "goal_baseline": goal,
+        "same_goal_accuracy": same,
+        "same_goal_pairs": n_same,
     }
+    if rounds:
+        rng = random.Random(seed)
+        n = len(items)
+        aucs, sames = [], []
+        for _ in range(rounds):
+            sample = [items[rng.randrange(n)] for _ in range(n)]
+            a, s, _, _, _ = stats(sample)
+            aucs.append(a)
+            sames.append(s)
+        aucs.sort()
+        sames.sort()
+        out["auc_ci95"] = [aucs[int(0.025 * len(aucs))], aucs[int(0.975 * len(aucs))]]
+        out["same_goal_ci95"] = [sames[int(0.025 * len(sames))], sames[int(0.975 * len(sames))]]
+    return out
 
 
 def main() -> None:
