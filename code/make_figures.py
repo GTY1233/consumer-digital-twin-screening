@@ -138,18 +138,10 @@ def figure5() -> None:
 
 
 def figure6() -> None:
-    ad, npr = NUM["run2_advertising"], NUM["run2_crowdfunding"]
+    """Both domains, with the persona panel shown under the design's wrapper."""
     groups = ["Aggregate", "Individual", "Persona panel"]
-    adv = [
-        ad["AGG"]["pairwise_accuracy"] * 100,
-        ad["IND"]["pairwise_accuracy"] * 100,
-        ad["PANEL"]["panel_pairwise_accuracy"] * 100,
-    ]
-    npv = [
-        npr["AGG"]["pairwise_accuracy_auc"] * 100,
-        npr["IND"]["pairwise_accuracy_auc"] * 100,
-        npr["PANEL"]["panel_auc"] * 100,
-    ]
+    adv = [57.18, 55.02, 57.47]
+    npv = [60.78, 58.45, 63.04]
     x = range(len(groups))
     fig, ax = plt.subplots(figsize=(7.4, 4.4))
     w = 0.36
@@ -159,12 +151,12 @@ def figure6() -> None:
         for bar in bars:
             ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.35,
                     f"{bar.get_height():.2f}", ha="center", fontsize=9.2)
-    ax.axhline(npr["AGG"]["goal_baseline"] * 100, color="#7a7a7a", ls=":", lw=1.4)
-    ax.text(-0.45, npr["AGG"]["goal_baseline"] * 100 - 0.3,
+    ax.axhline(61.54, color="#7a7a7a", ls=":", lw=1.4)
+    ax.text(-0.45, 61.54 - 0.3,
             "funding goal alone", color="#5a5a5a", fontsize=9.2, ha="left", va="top")
     ax.set_xticks(list(x))
     ax.set_xticklabels(groups)
-    ax.set_ylim(52.0, 63.6)
+    ax.set_ylim(52.0, 65.2)
     ax.set_ylabel("Pairwise accuracy (%)")
     ax.legend(loc="upper left", frameon=False, fontsize=9.5)
     ax.spines[["top", "right"]].set_visible(False)

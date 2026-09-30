@@ -39,6 +39,10 @@ def store(name: str) -> dict[str, list[int]]:
     return {r["id"]: r["scores"] for r in read_jsonl(RUNS / name) if r.get("scores") is not None}
 
 
+def load_store_factory():
+    return store
+
+
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     tasks = {t["id"]: t for t in read_jsonl(RUNS / "ad_confirmatory_tasks.jsonl")}

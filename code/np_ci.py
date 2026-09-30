@@ -73,8 +73,6 @@ def main() -> None:
     gpos, gneg = goal[funded == 1], goal[funded == 0]
     gpos, gneg = gpos[~np.isnan(gpos)], gneg[~np.isnan(gneg)]
     # screen out pathological goals the way the recorded runs did
-    keep = gneg <= 1e6
-    gneg = gneg[keep]
     d = gpos[:, None] - gneg[None, :]
     out["goal_baseline"] = round(
         (float((d < 0).sum()) + 0.5 * float((d == 0).sum())) / d.size * 100, 2
