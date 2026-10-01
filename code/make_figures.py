@@ -183,13 +183,15 @@ def figure5() -> None:
         off = 0.8 if v >= 0 else -2.2
         ax.text(bar.get_x() + bar.get_width() / 2, v + off, f"{v:+.2f}%",
                 ha="center", fontsize=10.5, fontweight="bold")
-    ax.annotate(
-        "", xy=(2, oracle - 1.2), xytext=(1, sysv + 1.2),
-        arrowprops=dict(arrowstyle="-|>", lw=1.5, color="#555555"),
-    )
-    ax.text(0.52, 31.0,
+    # Bracket the gap between the system's choice and a perfect ranking, drawn in
+    # the empty column between the two bars so the head never lands inside a bar.
+    bx = 1.50
+    ax.plot([bx, bx], [sysv, oracle], color="#555555", lw=1.5)
+    for y in (sysv, oracle):
+        ax.plot([bx - 0.055, bx + 0.055], [y, y], color="#555555", lw=1.5)
+    ax.text(bx - 0.10, (sysv + oracle) / 2,
             f"{a['share_of_oracle'] * 100:.1f}% of the gain\navailable to a perfect\nranking is captured",
-            ha="left", va="center", fontsize=9.5, color="#555555")
+            ha="right", va="center", fontsize=9.5, color="#555555")
     ax.axhline(0, color="#333333", lw=1.0)
     ax.set_ylabel("Click-through-rate lift over the test average (%)")
     ax.set_ylim(-3, 42)
@@ -209,12 +211,19 @@ def figure6() -> None:
     w = 0.36
     b1 = ax.bar([i - w / 2 for i in x], adv, w, label="Advertising creative", color=BLUE)
     b2 = ax.bar([i + w / 2 for i in x], npv, w, label="New-product screening", color=ORANGE)
+    goal = 61.54
     for bars in (b1, b2):
         for bar in bars:
-            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.35,
-                    f"{bar.get_height():.2f}", ha="center", fontsize=9.2)
-    ax.axhline(61.54, color="#7a7a7a", ls=":", lw=1.4)
-    ax.text(-0.45, 61.54 - 0.3,
+            y = bar.get_height()
+            label_y = y + 0.35
+            # keep the value clear of the dotted goal line, which would otherwise
+            # run through the label of any bar close to it
+            if goal - 0.25 < label_y < goal + 0.85:
+                label_y = goal + 0.85
+            ax.text(bar.get_x() + bar.get_width() / 2, label_y,
+                    f"{y:.2f}", ha="center", fontsize=9.2)
+    ax.axhline(goal, color="#7a7a7a", ls=":", lw=1.4)
+    ax.text(-0.45, goal - 0.30,
             "funding goal alone", color="#5a5a5a", fontsize=9.2, ha="left", va="top")
     ax.set_xticks(list(x))
     ax.set_xticklabels(groups)
