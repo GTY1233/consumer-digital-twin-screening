@@ -51,18 +51,30 @@ def box(ax, x, y, w, h, title, body, face, edge="#1f4e79", title_size=12):
             linewidth=1.4, edgecolor=edge, facecolor=face,
         )
     )
-    ax.text(x + w / 2, y + h * 0.70, title, ha="center", va="center",
+    ax.text(x + w / 2, y + h * 0.68, title, ha="center", va="center",
             fontsize=title_size, fontweight="bold", color="#1f3864")
     if body:
-        ax.text(x + w / 2, y + h * 0.30, body, ha="center", va="center",
+        ax.text(x + w / 2, y + h * 0.27, body, ha="center", va="center",
                 fontsize=9.5, color="#333333")
 
 
-def arrow(ax, x0, y0, x1, y1, color=BLUE, lw=1.8, head=0.16):
+def arrow(ax, x0, y0, x1, y1, color=BLUE, lw=1.8, clearance=0.018):
+    """Draw an arrow that stops clear of both endpoints.
+
+    Every connector in these figures must leave a visible gap before the border
+    of the next box, otherwise the head either touches the border or lands
+    inside the box.
+    """
+    dx, dy = x1 - x0, y1 - y0
+    length = (dx * dx + dy * dy) ** 0.5
+    if length <= 2 * clearance:
+        raise ValueError("arrow shorter than twice the clearance")
+    ux, uy = dx / length, dy / length
     ax.annotate(
-        "", xy=(x1, y1), xytext=(x0, y0),
+        "", xy=(x1 - ux * clearance, y1 - uy * clearance),
+        xytext=(x0 + ux * clearance, y0 + uy * clearance),
         arrowprops=dict(arrowstyle="-|>", lw=lw, color=color,
-                        shrinkA=0, shrinkB=0, mutation_scale=18),
+                        shrinkA=0, shrinkB=0, mutation_scale=15),
     )
 
 
@@ -83,7 +95,7 @@ def figure1() -> None:
         y = 0.985 - h - i * (h + gap)
         box(ax, x0, y, w, h, title, body, "#eef2f7", title_size=13)
         if i < len(layers) - 1:
-            arrow(ax, 0.5, y - 0.012, 0.5, y - gap + 0.012)
+            arrow(ax, 0.5, y, 0.5, y - gap)
     ax.text(0.5, 0.02, "Design rule: the outcome data never reaches the inference layer",
             ha="center", va="center", fontsize=10.5, style="italic", color="#b03030")
     fig.savefig(OUT / "figure1.png", bbox_inches="tight", facecolor="white", pad_inches=0.18)
@@ -98,23 +110,26 @@ def figure2() -> None:
     ax.axis("off")
     boxes = [
         (0.02, "Generational cohort", "Gen Z / millennial\nGen X / boomer"),
-        (0.35, "Decision style", "Analytic versus experiential\n(Sproles & Kendall 1986)"),
-        (0.68, "Dispositions", "Need for cognition\nCuriosity-gap response"),
+        (0.365, "Decision style", "Analytic versus experiential\n(Sproles & Kendall 1986)"),
+        (0.71, "Dispositions", "Need for cognition\nCuriosity-gap response"),
     ]
-    top, h, w = 0.985, 0.315, 0.30
+    top, h, w = 0.99, 0.205, 0.27
     for x, title, body in boxes:
         box(ax, x, top - h, w, h, title, body, "#e7f0e9", title_size=12.5)
-    collector = top - h - 0.075
+    box_bottom = top - h
+    collector = box_bottom - 0.07
     for x, _, _ in boxes:
-        arrow(ax, x + w / 2, top - h - 0.012, x + w / 2, collector + 0.004)
-    ax.plot([0.17, 0.83], [collector, collector], color=BLUE, lw=1.8, solid_capstyle="round")
-    arrow(ax, 0.5, collector, 0.5, collector - 0.085)
-    panel_h = 0.235
-    panel_top = collector - 0.085
+        arrow(ax, x + w / 2, box_bottom, x + w / 2, collector)
+    ax.plot([boxes[0][0] + w / 2, boxes[-1][0] + w / 2], [collector, collector],
+            color=BLUE, lw=1.8, solid_capstyle="round")
+    panel_top = collector - 0.07
+    arrow(ax, 0.5, collector, 0.5, panel_top)
+    panel_h = 0.20
     box(ax, 0.135, panel_top - panel_h, 0.73, panel_h, "Eight-persona panel",
         "4 cohorts x 2 decision styles", "#fdf3e3", title_size=12.5)
-    arrow(ax, 0.5, panel_top - panel_h - 0.012, 0.5, panel_top - panel_h - 0.10)
-    box(ax, 0.135, 0.015, 0.73, 0.175, "Independent judgment per creative",
+    judg_top = panel_top - panel_h - 0.07
+    arrow(ax, 0.5, panel_top - panel_h, 0.5, judg_top)
+    box(ax, 0.135, judg_top - 0.16, 0.73, 0.16, "Independent judgment per creative",
         "Averaged to an expected ordering", "#fdf3e3", title_size=12.5)
     fig.savefig(OUT / "figure2.png", bbox_inches="tight", facecolor="white", pad_inches=0.18)
     plt.close(fig)
@@ -125,18 +140,16 @@ def figure3() -> None:
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis("off")
-    box(ax, 0.02, 0.60, 0.28, 0.32, "Exploratory split",
+    box(ax, 0.02, 0.60, 0.26, 0.32, "Exploratory split",
         "4,873 tests\nmethod development only", "#eef2f7")
-    box(ax, 0.36, 0.60, 0.28, 0.32, "Confirmatory split",
+    box(ax, 0.37, 0.60, 0.26, 0.32, "Confirmatory split",
         "22,743 tests\ntwo recorded executions", "#fdf3e3")
-    box(ax, 0.70, 0.60, 0.28, 0.32, "Holdout split",
+    box(ax, 0.72, 0.60, 0.26, 0.32, "Holdout split",
         "4,871 tests\nnot used", "#f0f0f0")
-    ax.annotate("", xy=(0.355, 0.80), xytext=(0.305, 0.80),
-                arrowprops=dict(arrowstyle="-|>", lw=1.6, color=BLUE))
+    arrow(ax, 0.28, 0.80, 0.37, 0.80, clearance=0.015)
     ax.text(0.33, 0.94, "protocol frozen", ha="center", va="bottom",
             fontsize=9.5, color=BLUE)
-    ax.annotate("", xy=(0.50, 0.32), xytext=(0.50, 0.585),
-                arrowprops=dict(arrowstyle="-|>", lw=1.6, color=BLUE))
+    arrow(ax, 0.50, 0.60, 0.50, 0.32, clearance=0.022)
     box(ax, 0.06, 0.02, 0.88, 0.30, "Two recorded executions of the frozen protocol",
         "pairwise accuracy, top-1 and decision lift\nagainst real outcomes", "#e8eef6",
         title_size=11.5)
