@@ -58,6 +58,68 @@ def box(ax, x, y, w, h, title, body, face, edge="#1f4e79", title_size=12):
                 fontsize=9.5, color="#333333")
 
 
+def arrow(ax, x0, y0, x1, y1, color=BLUE, lw=1.8, head=0.16):
+    ax.annotate(
+        "", xy=(x1, y1), xytext=(x0, y0),
+        arrowprops=dict(arrowstyle="-|>", lw=lw, color=color,
+                        shrinkA=0, shrinkB=0, mutation_scale=18),
+    )
+
+
+def figure1() -> None:
+    """Four-layer architecture: generous gaps so the arrows stay legible."""
+    fig, ax = plt.subplots(figsize=(9.0, 6.0))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    layers = [
+        ("Data layer", "Versioned creative inventory; outcome store kept separate"),
+        ("Panel layer", "Personas from published segmentation and decision-style constructs"),
+        ("Inference layer", "Each creative put to every panel member; fixed JSON contract"),
+        ("Decision layer", "Expected ordering, dispersion across panel members, validated scope"),
+    ]
+    h, gap, x0, w = 0.145, 0.105, 0.035, 0.93
+    for i, (title, body) in enumerate(layers):
+        y = 0.985 - h - i * (h + gap)
+        box(ax, x0, y, w, h, title, body, "#eef2f7", title_size=13)
+        if i < len(layers) - 1:
+            arrow(ax, 0.5, y - 0.012, 0.5, y - gap + 0.012)
+    ax.text(0.5, 0.02, "Design rule: the outcome data never reaches the inference layer",
+            ha="center", va="center", fontsize=10.5, style="italic", color="#b03030")
+    fig.savefig(OUT / "figure1.png", bbox_inches="tight", facecolor="white", pad_inches=0.18)
+    plt.close(fig)
+
+
+def figure2() -> None:
+    """Persona construction: three sources merge on a collector line, then descend."""
+    fig, ax = plt.subplots(figsize=(9.2, 6.0))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    boxes = [
+        (0.02, "Generational cohort", "Gen Z / millennial\nGen X / boomer"),
+        (0.35, "Decision style", "Analytic versus experiential\n(Sproles & Kendall 1986)"),
+        (0.68, "Dispositions", "Need for cognition\nCuriosity-gap response"),
+    ]
+    top, h, w = 0.985, 0.315, 0.30
+    for x, title, body in boxes:
+        box(ax, x, top - h, w, h, title, body, "#e7f0e9", title_size=12.5)
+    collector = top - h - 0.075
+    for x, _, _ in boxes:
+        arrow(ax, x + w / 2, top - h - 0.012, x + w / 2, collector + 0.004)
+    ax.plot([0.17, 0.83], [collector, collector], color=BLUE, lw=1.8, solid_capstyle="round")
+    arrow(ax, 0.5, collector, 0.5, collector - 0.085)
+    panel_h = 0.235
+    panel_top = collector - 0.085
+    box(ax, 0.135, panel_top - panel_h, 0.73, panel_h, "Eight-persona panel",
+        "4 cohorts x 2 decision styles", "#fdf3e3", title_size=12.5)
+    arrow(ax, 0.5, panel_top - panel_h - 0.012, 0.5, panel_top - panel_h - 0.10)
+    box(ax, 0.135, 0.015, 0.73, 0.175, "Independent judgment per creative",
+        "Averaged to an expected ordering", "#fdf3e3", title_size=12.5)
+    fig.savefig(OUT / "figure2.png", bbox_inches="tight", facecolor="white", pad_inches=0.18)
+    plt.close(fig)
+
+
 def figure3() -> None:
     fig, ax = plt.subplots(figsize=(9.2, 3.6))
     ax.set_xlim(0, 1)
@@ -167,6 +229,8 @@ def figure6() -> None:
 
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
+    figure1()
+    figure2()
     figure3()
     figure4()
     figure5()
